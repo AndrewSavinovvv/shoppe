@@ -7,24 +7,68 @@ const items = [
   { title: "Hal Earrings", price: "$25.00", img: item },
   { title: "Kaede Hair Pin Set Of 3", price: "$30.00", img: item },
   { title: "Hair Pin Set of 3", price: "$30.00", img: item },
-  { title: "Plaine Necklace", price: "$19.00", img: item, sale: "Sold out" },
+  { title: "Plaine Necklace", price: "$19.00", img: item, stock: "Sold out" },
   { title: "Yuki Hair Pin Set of 3", price: "$29.00", img: item },
 ];
 
-const isActive = ref(false);
+const isActiveSale = ref(false);
+const isActiveStock = ref(false);
+const showShopByMenu = ref(false);
+const showSortByMenu = ref(false);
+const selectedCategory = ref("All");
+const selectedSort = ref("Default");
 
-const toggleButton = () => {
-  isActive.value = !isActive.value;
-};
 const minPrice = ref(0);
 const maxPrice = ref(180);
+const searchQuery = ref("");
 
 const filteredItems = computed(() => {
   return items.filter(item => {
     const priceValue = parseFloat(item.price.replace(/[^0-9.-]+/g, ""));
-    return priceValue >= minPrice.value && priceValue <= maxPrice.value;
+    const matchesPrice = priceValue >= minPrice.value && priceValue <= maxPrice.value;
+    const matchesSearch = item.title.toLowerCase().includes(searchQuery.value.toLowerCase());
+    const matchesSale = !isActiveSale.value || item.sale;
+    const matchesStock = !isActiveStock.value || (!item.stock || item.stock !== "Sold out");
+    return matchesPrice && matchesSearch && matchesSale && matchesStock;
   });
 });
+
+const sortedItems = computed(() => {
+  let itemsToSort = filteredItems.value;
+  if (selectedSort.value === "PriceLowToHigh") {
+    return itemsToSort.sort((a, b) => parseFloat(a.price.replace(/[^0-9.-]+/g, "")) - parseFloat(b.price.replace(/[^0-9.-]+/g, "")));
+  } else if (selectedSort.value === "PriceHighToLow") {
+    return itemsToSort.sort((a, b) => parseFloat(b.price.replace(/[^0-9.-]+/g, "")) - parseFloat(a.price.replace(/[^0-9.-]+/g, "")));
+  }
+  return itemsToSort;
+});
+
+const toggleSaleFilter = () => {
+  isActiveSale.value = !isActiveSale.value;
+};
+
+const toggleStockFilter = () => {
+  isActiveStock.value = !isActiveStock.value;
+};
+
+const toggleShopByMenu = () => {
+  showShopByMenu.value = !showShopByMenu.value;
+};
+
+const toggleSortByMenu = () => {
+  showSortByMenu.value = !showSortByMenu.value;
+};
+
+const filterByCategory = (category) => {
+  selectedCategory.value = category;
+  showShopByMenu.value = false;
+};
+
+const sortItems = (sortType) => {
+  selectedSort.value = sortType;
+  showSortByMenu.value = false;
+};
+
 </script>
 
 <template>
@@ -34,23 +78,38 @@ const filteredItems = computed(() => {
       <div class="shop__left__list">
         <ul class="shop__left__list___item">
           <li class="shop__left__list___item__search">
-            <input class="shop__left__search" placeholder="Search..." type="text" />
+            <input
+                class="shop__left__search"
+                placeholder="Search..."
+                type="text"
+                v-model="searchQuery"
+            />
             <img class="search__icon" src="@/assets/icon/search.svg" alt="" />
           </li>
           <li class="shop__left__sort">
-            <span>Shop By</span>
+            <span @click="toggleShopByMenu">Shop By</span>
             <span>
               <img src="@/assets/icon/arrow-down.svg" alt="" />
             </span>
+            <ul v-if="showShopByMenu" class="dropdown__menu">
+              <li @click="filterByCategory('Earrings')">Earrings</li>
+              <li @click="filterByCategory('Necklaces')">Necklaces</li>
+              <li @click="filterByCategory('All')">All</li>
+            </ul>
           </li>
           <li class="shop__left__shop">
-            <span>Sort By</span>
+            <span @click="toggleSortByMenu">Sort By</span>
             <span>
               <img src="@/assets/icon/arrow-down.svg" alt="" />
             </span>
+            <ul v-if="showSortByMenu" class="dropdown__menu">
+              <li @click="sortItems('PriceLowToHigh')">Price: Low to High</li>
+              <li @click="sortItems('PriceHighToLow')">Price: High to Low</li>
+              <li @click="sortItems('Default')">Default</li>
+            </ul>
           </li>
           <li class="shop__left__filter">
-            <div class="price-filter">
+            <div class="price__filter">
               <input type="range" min="0" max="180" step="1" v-model="minPrice" />
             </div>
             <p class="filter__text">Price: ${{ minPrice }} - ${{ maxPrice }}
@@ -59,11 +118,17 @@ const filteredItems = computed(() => {
           </li>
           <li class="shop__left__btn">
             <span>On sale</span>
-            <button :class="['toggle__button', { active: isActive }]" @click="toggleButton"></button>
+            <button
+                :class="['toggle__button', { active: isActiveSale }]"
+                @click="toggleSaleFilter"
+            ></button>
           </li>
           <li class="shop__left__btn">
             <span>In stock</span>
-            <button :class="['toggle__button', { active: isActive }]" @click="toggleButton"></button>
+            <button
+                :class="['toggle__button', { active: isActiveStock }]"
+                @click="toggleStockFilter"
+            ></button>
           </li>
         </ul>
       </div>
@@ -73,10 +138,11 @@ const filteredItems = computed(() => {
       <span>Necklace</span>
     </div>
     <div class="shop__right">
-      <div v-for="item in filteredItems" class="shop__right__item">
+      <div v-for="item in sortedItems" class="shop__right__item" :key="item.title">
         <div class="item__img">
           <img :src="item.img" alt="" />
           <span class="item__sale" v-if="item.sale">{{ item.sale }}</span>
+          <span class="item__sale" v-if="item.stock">{{ item.stock }}</span>
         </div>
         <span class="item__title">{{ item.title }}</span>
         <span class="item__price">{{ item.price }}</span>
@@ -84,14 +150,56 @@ const filteredItems = computed(() => {
     </div>
   </div>
 </template>
-
 <style scoped>
+.shop__left__sort,.shop__left__shop {
+  position: relative;
+}
+.dropdown__menu {
+  width: 215px;
+  position: absolute;
+  background: white;
+  top: 0;
+
+  border: 1px solid #ccc;
+  z-index: 1000;
+  list-style: none;
+}
+.price__filter input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  background: transparent;
+  height: 4px;
+}
+
+.price__filter input[type="range"]::-webkit-slider-runnable-track {
+  background: #000000;
+  height: 2px;
+  border-radius: 2px;
+}
+
+.price__filter input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 2px;
+  height: 10px;
+  background: #000000;
+  cursor: pointer;
+  margin-top: -4px;
+}
+
+.dropdown__menu li {
+  padding: 5px;
+  cursor: pointer;
+}
+
+.dropdown__menu li:hover {
+  background-color: #f0f0f0;
+}
 .shop {
   display: flex;
   justify-content: space-between;
 }
 .shop__title {
-  margin-top: 209px;
+  margin-top: 93px;
   font-family: DM Sans, sans-serif;
   font-size: 33px;
   font-weight: 500;

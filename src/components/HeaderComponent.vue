@@ -46,7 +46,7 @@
 .header {
   display: flex;
   justify-content: space-between;
-  margin-top: 49px;
+  padding-top: 49px;
 }
 .header__title {
   font-family: "Allerta Stencil", sans-serif;
