@@ -3,20 +3,25 @@ import item from "@/assets/img/Lira Earrings.png";
 import { ref, computed } from 'vue';
 import SelectComponent from "@/components/SelectComponent.vue";
 import SearchComponent from "@/components/SearchComponent.vue";
-import PriceFilterComponent from "@/components/PriceFilterComponent.vue";
+import RangeComponent from "@/components/RangeComponent.vue";
 
 const items = [
-  { title: "Lira Earrings", price: "20.00", img: item, sale: "-21%", collection: "Earrings" },
-  { title: "Hal Earrings", price: "25.00", img: item, collection: "Earrings" },
-  { title: "Kaede Hair Pin Set Of 3", price: "30.00", img: item, collection: "Earrings" },
-  { title: "Hair Pin Set of 3", price: "30.00", img: item, collection: "Necklaces" },
-  { title: "Plaine Necklace", price: "19.00", img: item, stock: "Sold out", collection: "Necklaces" },
-  { title: "Yuki Hair Pin Set of 3", price: "29.00", img: item, collection: "Necklaces" },
+  { title: "Lira Earrings", price: 20, img: item, sale: "-21%", collection: "Earrings" },
+  { title: "Hal Earrings", price: 25, img: item, collection: "Earrings" },
+  { title: "Kaede Hair Pin Set Of 3", price: 30, img: item, collection: "Earrings" },
+  { title: "Hair Pin Set of 3", price: 30, img: item, collection: "Necklaces" },
+  { title: "Plaine Necklace", price: 19, img: item, stock: "Sold out", collection: "Necklaces" },
+  { title: "Yuki Hair Pin Set of 3", price: 29, img: item, collection: "Necklaces" },
 ];
 
 /// filter
 const minPrice = ref(0);
 const maxPrice = ref(180);
+
+const updatePriceRange = ({ minPrice: newMinPrice, maxPrice: newMaxPrice }) => {
+  minPrice.value = newMinPrice;
+  maxPrice.value = newMaxPrice;
+};
 
 /// search
 const searchQuery = ref('');
@@ -98,7 +103,9 @@ const filterByCollection = (collection) => {
           </li>
           <SelectComponent :options="collectionOptions" propNames="Shop By" @select="filterByCollection" />
           <SelectComponent :options="sortOptions" propNames="Sort By" @select="sortItems"></SelectComponent>
-          <PriceFilterComponent :minPrice="minPrice" :maxPrice="maxPrice" @update:minPrice="minPrice = $event" />
+          <RangeComponent :minPrice="minPrice" :maxPrice="maxPrice" @update:priceRange="updatePriceRange" />
+
+
           <li class="shop__left__btn">
             <span>On sale</span>
             <button
@@ -266,17 +273,6 @@ const filterByCollection = (collection) => {
   .item__img img {
     width: 100%;
     height: auto;
-  }
-  .category-filters {
-    display: flex;
-    justify-content: space-around;
-    padding-top: 10px;
-    background-color: white;
-    font-family: "DM Sans", sans-serif;
-    font-size: 16px;
-    font-weight: 500;
-    color: #000000;
-
   }
 
   .category-filters span {
