@@ -1,101 +1,188 @@
 <template>
-  <li class="shop__left__filter">
-    <div class="price__filter">
-      <input
-          type="range"
-          min="0"
-          :max="props.maxPrice"
-          step="1"
-          v-model="localMinPrice"
-          @input="updatePriceRange"
-      />
-      <input
-          type="range"
-          :min="localMinPrice"
-          max="180"
-          step="1"
-          v-model="localMaxPrice"
-          @input="updatePriceRange"
-      />
+  <div
+      ref="rootRef"
+      class="range-slider"
+      @mousedown="onMouseDown"
+      @touchstart="onMouseDown"
+      tabindex="0"
+      aria-valuenow="0"
+      aria-valuemin="0"
+      aria-valuemax="100"
+  >
+    <div class="track" :style="trackStyle">
+      <div class="filled" :style="filledStyle"></div>
+      <div
+          class="thumb min-thumb"
+          :style="minThumbStyle"
+          @mousedown.stop="onThumbMouseDown('min')"
+          @touchstart.stop="onThumbMouseDown('min')"
+      >
+        <span v-if="leftLabelValue">{{ leftLabelValue }}</span>
+      </div>
+      <div
+          class="thumb max-thumb"
+          :style="maxThumbStyle"
+          @mousedown.stop="onThumbMouseDown('max')"
+          @touchstart.stop="onThumbMouseDown('max')"
+      >
+        <span v-if="rightLabelValue">{{ rightLabelValue }}</span>
+      </div>
     </div>
-    <p class="filter__text">
-      Price: ${{ localMinPrice }} - ${{ localMaxPrice }}
-      <span>Filter</span>
-    </p>
-  </li>
+  </div>
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue';
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
-  minPrice: {
-    type: Number,
+  modelValue: {
+    type: Object,
+    default: () => ({ min: 0, max: 100 }),
+    validator: value => 'min' in value && 'max' in value
   },
-  maxPrice: {
+  min: {
     type: Number,
+    default: 0
   },
-});
+  max: {
+    type: Number,
+    default: 100
+  },
+  leftLabelValue: {
+    type: [String, Number],
+    default: ''
+  },
+  rightLabelValue: {
+    type: [String, Number],
+    default: ''
+  }
+})
 
-const emit = defineEmits();
+const emit = defineEmits(['update:modelValue'])
 
-const localMinPrice = ref(props.minPrice);
-const localMaxPrice = ref(props.maxPrice);
+const rootRef = ref(null)
+const minRatio = ref(0)
+const maxRatio = ref(1)
+const activeThumb = ref(null)
 
-const updatePriceRange = () => {
-  emit('update:priceRange', { minPrice: localMinPrice.value, maxPrice: localMaxPrice.value });
-};
+watch(() => props.modelValue, (newValue) => {
+  const minPercent = ((newValue.min - props.min) / (props.max - props.min)) * 100
+  const maxPercent = ((newValue.max - props.min) / (props.max - props.min)) * 100
+  minRatio.value = minPercent
+  maxRatio.value = maxPercent
+}, { immediate: true })
+
+const trackStyle = computed(() => ({
+  width: '100%',
+  height: '8px',
+  backgroundColor: '#ddd',
+  position: 'relative'
+}))
+
+const filledStyle = computed(() => ({
+  position: 'absolute',
+  height: '8px',
+  backgroundColor: 'black',
+  left: `${minRatio.value}%`,
+  width: `${maxRatio.value - minRatio.value}%`,
+
+}))
+
+const minThumbStyle = computed(() => ({
+  left: `${minRatio.value}%`,
+  position: 'absolute',
+  height: '16px',
+  width: '16px',
+  backgroundColor: 'red',
+  cursor: 'pointer',
+  borderRadius: '50%'
+}))
+
+const maxThumbStyle = computed(() => ({
+  left: `${maxRatio.value}%`,
+  position: 'absolute',
+  height: '16px',
+  width: '16px',
+  backgroundColor: 'red',
+  cursor: 'pointer',
+  borderRadius: '50%'
+}))
+
+const onThumbMouseDown = (thumb) => {
+  activeThumb.value = thumb
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseup', onMouseUp)
+  window.addEventListener('touchmove', onMouseMove)
+  window.addEventListener('touchend', onMouseUp)
+}
+const onMouseMove = (event) => {
+  const rect = rootRef.value.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const percent = Math.max(0, Math.min(1, x / rect.width))
+  const newValue = Math.round(percent * (props.max - props.min) + props.min)
+
+  if (activeThumb.value === 'min') {
+
+    if (newValue >= props.modelValue.max) {
+      emit('update:modelValue', { min: newValue, max: newValue })
+      activeThumb.value = 'max'
+    } else {
+
+      emit('update:modelValue', { ...props.modelValue, min: newValue })
+    }
+  } else if (activeThumb.value === 'max') {
+
+    if (newValue <= props.modelValue.min) {
+      emit('update:modelValue', { min: newValue, max: newValue })
+      activeThumb.value = 'min'
+    } else {
+
+      emit('update:modelValue', { ...props.modelValue, max: newValue })
+    }
+  }
+}
+
+const onMouseUp = () => {
+  window.removeEventListener('mousemove', onMouseMove)
+  window.removeEventListener('mouseup', onMouseUp)
+  window.removeEventListener('touchmove', onMouseMove)
+  window.removeEventListener('touchend', onMouseUp)
+  activeThumb.value = null
+}
 </script>
 
 <style scoped>
-.price__filter {
+.range-slider {
+  width: 100%;
+  user-select: none;
   position: relative;
-  width: 100%;
 }
 
-.price__filter input[type="range"] {
-  -webkit-appearance: none;
-  width: 100%;
-  background: transparent;
-  height: 4px;
+.track {
+  position: relative;
+  height: 8px;
+  background: #ddd;
+}
+
+.filled {
   position: absolute;
+  height: 8px;
+  background: black;
 }
 
-.price__filter input[type="range"]:nth-child(1) {
-  z-index: 1;
-}
-.price__filter input[type="range"]:nth-child(2) {
-  z-index: 2;
-}
-
-.price__filter input[type="range"]::-webkit-slider-runnable-track {
-  background: #000000;;
-  height: 2px;
-  border-radius: 2px;
-}
-
-.price__filter input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 2px;
-  height: 10px;
-  background: #000000;
+.thumb {
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
   cursor: pointer;
-  margin-top: -4px;
 }
 
-.filter__text {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #707070;
-  font-family: "DM Sans", sans-serif;
-  font-size: 14px;
-  padding-top: 8px;
+.min-thumb {
+  background: blue;
 }
-.filter__text span {
-  color: #A18A68;
-  font-family: "DM Sans", sans-serif;
-  font-size: 14px;
-  font-weight: 400;
+
+.max-thumb {
+  background: red;
 }
 </style>
