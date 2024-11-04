@@ -1,9 +1,9 @@
 <template>
-  <li class="shop__left__filter">
+  <div class="shop__left__filter">
     <div class="price__filter">
       <input
           type="range"
-          min="0"
+          :min="props.minPrice"
           :max="props.maxPrice"
           step="1"
           v-model="localMinPrice"
@@ -12,7 +12,7 @@
       <input
           type="range"
           :min="localMinPrice"
-          max="180"
+          :max="props.maxPrice"
           step="1"
           v-model="localMaxPrice"
           @input="updatePriceRange"
@@ -22,7 +22,7 @@
       Price: ${{ localMinPrice }} - ${{ localMaxPrice }}
       <span>Filter</span>
     </p>
-  </li>
+  </div>
 </template>
 
 <script setup>
@@ -31,13 +31,15 @@ import { ref, defineProps, defineEmits } from 'vue';
 const props = defineProps({
   minPrice: {
     type: Number,
+    required: true,
   },
   maxPrice: {
     type: Number,
+    required: true,
   },
 });
 
-const emit = defineEmits();
+const emit = defineEmits(['update:priceRange']);
 
 const localMinPrice = ref(props.minPrice);
 const localMaxPrice = ref(props.maxPrice);
@@ -69,7 +71,7 @@ const updatePriceRange = () => {
 }
 
 .price__filter input[type="range"]::-webkit-slider-runnable-track {
-  background: #000000;;
+  background: #D8D8D8;;
   height: 2px;
   border-radius: 2px;
 }
@@ -99,3 +101,4 @@ const updatePriceRange = () => {
   font-weight: 400;
 }
 </style>
+

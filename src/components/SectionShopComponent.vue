@@ -3,7 +3,6 @@ import item from "@/assets/img/Lira Earrings.png";
 import { ref, computed } from 'vue';
 import SelectComponent from "@/components/SelectComponent.vue";
 import SearchComponent from "@/components/SearchComponent.vue";
-import RangeComponent from "@/components/RangeComponent.vue";
 
 const items = [
   { title: "Lira Earrings", price: 20, img: item, sale: "-21%", collection: "Earrings" },
@@ -14,16 +13,6 @@ const items = [
   { title: "Yuki Hair Pin Set of 3", price: 29, img: item, collection: "Necklaces" },
 ];
 
-/// filter
-const minPrice = ref(0);
-const maxPrice = ref(180);
-
-const updatePriceRange = ({ minPrice: newMinPrice, maxPrice: newMaxPrice }) => {
-  minPrice.value = newMinPrice;
-  maxPrice.value = newMaxPrice;
-};
-
-/// search
 const searchQuery = ref('');
 
 const filteredItems = computed(() => {
@@ -40,13 +29,11 @@ const filteredItems = computed(() => {
   if (isActiveStock.value) {
     result = result.filter(item => !item.stock || item.stock !== "Sold out");
   }
-  result = result.filter(item => item.price >= minPrice.value && item.price <= maxPrice.value);
   return result;
 });
 
-/// btn
 const isActiveSale = ref(false);
-const isActiveStock = ref(false)
+const isActiveStock = ref(false);
 const toggleSaleFilter = () => {
   isActiveSale.value = !isActiveSale.value;
 };
@@ -55,7 +42,6 @@ const toggleStockFilter = () => {
   isActiveStock.value = !isActiveStock.value;
 };
 
-///sort + collection
 const sortOptions = ref([
   { label: "Price: Low to High", value: "PriceLowToHigh" },
   { label: "Price: High to Low", value: "PriceHighToLow" },
@@ -82,7 +68,6 @@ const sortedItems = computed(() => {
 });
 
 const sortItems = (sortType) => {
-  console.log(1)
   selectedSort.value = sortType;
 };
 
@@ -98,13 +83,11 @@ const filterByCollection = (collection) => {
       <div class="shop__left__list">
         <ul class="shop__left__list___item">
           <li class="shop__left__list___item__search">
-           <SearchComponent v-model="searchQuery"></SearchComponent>
+            <SearchComponent v-model="searchQuery" />
             <img class="search__icon" src="@/assets/icon/search.svg" alt="" />
           </li>
           <SelectComponent :options="collectionOptions" propNames="Shop By" @select="filterByCollection" />
-          <SelectComponent :options="sortOptions" propNames="Sort By" @select="sortItems"></SelectComponent>
-          <RangeComponent :minPrice="minPrice" :maxPrice="maxPrice" @update:priceRange="updatePriceRange" />
-
+          <SelectComponent :options="sortOptions" propNames="Sort By" @select="sortItems" />
 
           <li class="shop__left__btn">
             <span>On sale</span>
