@@ -7,8 +7,7 @@
         v-model="rangeValues"
         :min="0"
         :max="100"
-        filledColor="blue"
-        thumbColor="blue"
+        color= "orange"
     />
   </div>
 </template>
@@ -27,4 +26,5 @@ const rangeValues = ref({
 .test {
   margin-bottom: 20px;
 }
+
 </style>

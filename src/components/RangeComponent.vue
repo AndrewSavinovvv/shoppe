@@ -7,24 +7,23 @@
       :aria-valuemin="props.min"
       :aria-valuemax="props.max"
   >
-    <div class="track" :style="trackStyle">
-      <div class="filled" :style="filledStyle"></div>
+    <div class="track">
+      <div class="filled" :class="colorClass" :style="filledStyle"></div>
       <div
           class="thumb min-thumb"
+          :class="colorClass"
           :style="minThumbStyle"
           @mousedown.stop="onThumbMouseDown('min')"
           @touchstart.stop="onThumbMouseDown('min')"
-      >
-        <span v-if="leftLabelValue">{{ leftLabelValue }}</span>
-      </div>
+      ></div>
+
       <div
           class="thumb max-thumb"
+          :class="colorClass"
           :style="maxThumbStyle"
           @mousedown.stop="onThumbMouseDown('max')"
           @touchstart.stop="onThumbMouseDown('max')"
-      >
-        <span v-if="rightLabelValue">{{ rightLabelValue }}</span>
-      </div>
+      ></div>
     </div>
   </div>
 </template>
@@ -46,21 +45,9 @@ const props = defineProps({
     type: Number,
     default: 100,
   },
-  leftLabelValue: {
-    type: [String, Number],
-    default: '',
-  },
-  rightLabelValue: {
-    type: [String, Number],
-    default: '',
-  },
-  filledColor: {
+  color: {
     type: String,
-    default: '#ddd',
-  },
-  thumbColor: {
-    type: String,
-    default: 'blue',
+    default: 'primary',
   },
 });
 
@@ -92,7 +79,6 @@ const trackStyle = computed(() => ({
 const filledStyle = computed(() => ({
   position: 'absolute',
   height: '8px',
-  backgroundColor: props.filledColor,
   left: `${minRatio.value}%`,
   width: `${maxRatio.value - minRatio.value}%`,
 }));
@@ -103,7 +89,6 @@ const minThumbStyle = computed(() => ({
   position: 'absolute',
   height: '16px',
   width: '16px',
-  backgroundColor: props.thumbColor,
   cursor: 'pointer',
   borderRadius: '50%',
 }));
@@ -114,18 +99,10 @@ const maxThumbStyle = computed(() => ({
   position: 'absolute',
   height: '16px',
   width: '16px',
-  backgroundColor: props.thumbColor,
   cursor: 'pointer',
   borderRadius: '50%',
+  transform: 'translateX(-50%)',
 }));
-
-const onThumbMouseDown = thumb => {
-  activeThumb.value = thumb;
-  window.addEventListener('mousemove', onMouseMove);
-  window.addEventListener('mouseup', onMouseUp);
-  window.addEventListener('touchmove', onMouseMove);
-  window.addEventListener('touchend', onMouseUp);
-};
 
 const onMouseMove = event => {
   const rect = rootRef.value.getBoundingClientRect();
@@ -150,13 +127,29 @@ const onMouseMove = event => {
   }
 };
 
+let isMouseMoveAdded = false;
+
+const onThumbMouseDown = thumb => {
+  activeThumb.value = thumb;
+  if (!isMouseMoveAdded) {
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('touchmove', onMouseMove);
+    window.addEventListener('touchend', onMouseUp);
+    isMouseMoveAdded = true;
+  }
+};
+
 const onMouseUp = () => {
   window.removeEventListener('mousemove', onMouseMove);
   window.removeEventListener('mouseup', onMouseUp);
   window.removeEventListener('touchmove', onMouseMove);
   window.removeEventListener('touchend', onMouseUp);
   activeThumb.value = null;
+  isMouseMoveAdded = false;
 };
+
+const colorClass = computed(() => `color-${props.color}`);
 </script>
 
 
@@ -171,6 +164,7 @@ const onMouseUp = () => {
   position: relative;
   height: 8px;
   background: #ddd;
+  border-radius: 10px;
 }
 
 .filled {
@@ -194,4 +188,17 @@ const onMouseUp = () => {
 .max-thumb {
   background: red;
 }
+.color-primary {
+  background-color: #007bff;
+}
+
+.color-orange {
+  background-color: #FFA500;
+}
+
+
+.color-green {
+  background-color: #28a745;
+}
+
 </style>

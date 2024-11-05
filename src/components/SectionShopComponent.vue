@@ -15,38 +15,44 @@ const items = [
 ];
 
 /// filter
-const minPrice = ref(0);
-const maxPrice = ref(180);
+const minPrice = ref(Math.min(...items.map(item => item.price)));
+const maxPrice = ref(Math.max(...items.map(item => item.price)));
 
-const updatePriceRange = ({ minPrice: newMinPrice, maxPrice: newMaxPrice }) => {
-  minPrice.value = newMinPrice;
-  maxPrice.value = newMaxPrice;
-};
+const rangeValues = ref({
+  min: minPrice.value,
+  max: maxPrice.value
+});
 
 /// search
 const searchQuery = ref('');
 
 const filteredItems = computed(() => {
   let result = items;
+
   if (selectedCollection.value !== "All") {
     result = result.filter(item => item.collection === selectedCollection.value);
   }
+
   if (searchQuery.value) {
     result = result.filter(item => item.title.toLowerCase().includes(searchQuery.value.toLowerCase()));
   }
+
   if (isActiveSale.value) {
     result = result.filter(item => item.sale);
   }
+
   if (isActiveStock.value) {
     result = result.filter(item => !item.stock || item.stock !== "Sold out");
   }
-  result = result.filter(item => item.price >= minPrice.value && item.price <= maxPrice.value);
+
+  result = result.filter(item => item.price >= rangeValues.value.min && item.price <= rangeValues.value.max);
   return result;
 });
 
 /// btn
 const isActiveSale = ref(false);
-const isActiveStock = ref(false)
+const isActiveStock = ref(false);
+
 const toggleSaleFilter = () => {
   isActiveSale.value = !isActiveSale.value;
 };
@@ -55,7 +61,7 @@ const toggleStockFilter = () => {
   isActiveStock.value = !isActiveStock.value;
 };
 
-///sort + collection
+/// sort + collection
 const sortOptions = ref([
   { label: "Price: Low to High", value: "PriceLowToHigh" },
   { label: "Price: High to Low", value: "PriceHighToLow" },
@@ -73,16 +79,17 @@ const selectedCollection = ref("All");
 
 const sortedItems = computed(() => {
   let itemsToSort = filteredItems.value.slice();
+
   if (selectedSort.value === "PriceLowToHigh") {
     return itemsToSort.sort((a, b) => a.price - b.price);
   } else if (selectedSort.value === "PriceHighToLow") {
     return itemsToSort.sort((a, b) => b.price - a.price);
   }
+
   return itemsToSort;
 });
 
 const sortItems = (sortType) => {
-  console.log(1)
   selectedSort.value = sortType;
 };
 
@@ -98,13 +105,17 @@ const filterByCollection = (collection) => {
       <div class="shop__left__list">
         <ul class="shop__left__list___item">
           <li class="shop__left__list___item__search">
-           <SearchComponent v-model="searchQuery"></SearchComponent>
+            <SearchComponent v-model="searchQuery" />
             <img class="search__icon" src="@/assets/icon/search.svg" alt="" />
           </li>
           <SelectComponent :options="collectionOptions" propNames="Shop By" @select="filterByCollection" />
-          <SelectComponent :options="sortOptions" propNames="Sort By" @select="sortItems"></SelectComponent>
-
-
+          <SelectComponent :options="sortOptions" propNames="Sort By" @select="sortItems" />
+          <RangeComponent
+              v-model="rangeValues"
+              :min="minPrice"
+              :max="maxPrice"
+              color="orange"
+          />
 
           <li class="shop__left__btn">
             <span>On sale</span>
