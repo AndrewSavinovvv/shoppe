@@ -103,7 +103,7 @@ const filterByCollection = (collection) => {
           </li>
           <SelectComponent :options="collectionOptions" propNames="Shop By" @select="filterByCollection" />
           <SelectComponent :options="sortOptions" propNames="Sort By" @select="sortItems"></SelectComponent>
-          <RangeComponent :minPrice="minPrice" :maxPrice="maxPrice" @update:priceRange="updatePriceRange" />
+
 
 
           <li class="shop__left__btn">
